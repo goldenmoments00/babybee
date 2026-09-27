@@ -1,0 +1,390 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  STAFF
+  CUSTOMER
+}
+
+enum InventoryMovementType {
+  IN
+  OUT
+  ADJUST
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password_hash String
+  role          Role      @default(CUSTOMER)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  
+  // Relations
+  customerProfile CustomerProfile?
+  addresses       Address[]
+  carts           Cart[]
+  wishlists       Wishlist[]
+  orders          Order[]
+  couponUsages    CouponUsage[]
+  notifications   Notification[]
+  adminLogs       AdminActivityLog[]
+}
+
+model CustomerProfile {
+  id         String   @id @default(uuid())
+  user_id    String   @unique
+  user       User     @relation(fields: [user_id], references: [id])
+  first_name String
+  last_name  String
+  phone      String?
+  dob        DateTime?
+}
+
+model Address {
+  id         String  @id @default(uuid())
+  user_id    String
+  user       User    @relation(fields: [user_id], references: [id])
+  type       String  // 'billing' or 'shipping'
+  street     String
+  city       String
+  state      String
+  pin_code   String
+  country    String
+  is_default Boolean @default(false)
+  
+  // Back relations for Orders
+  shippingOrders Order[] @relation("ShippingAddress")
+  billingOrders  Order[] @relation("BillingAddress")
+
+  @@index([user_id])
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  image_url   String?
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  
+  subcategories Subcategory[]
+
+  @@index([slug])
+}
+
+model Subcategory {
+  id          String   @id @default(uuid())
+  category_id String
+  category    Category @relation(fields: [category_id], references: [id])
+  name        String
+  slug        String   @unique
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+
+  products Product[]
+
+  @@index([slug])
+  @@index([category_id])
+}
+
+model Product {
+  id             String    @id @default(uuid())
+  subcategory_id String
+  subcategory    Subcategory @relation(fields: [subcategory_id], references: [id])
+  name           String
+  slug           String    @unique
+  description    String?
+  base_price     Decimal
+  status         String    @default("ACTIVE")
+  is_featured    Boolean   @default(false)
+  created_at     DateTime  @default(now())
+  deleted_at     DateTime?
+
+  images         ProductImage[]
+  variants       ProductVariant[]
+  wishlistItems  WishlistItem[]
+
+  @@index([slug])
+  @@index([subcategory_id])
+}
+
+model ProductImage {
+  id          String  @id @default(uuid())
+  product_id  String
+  product     Product @relation(fields: [product_id], references: [id])
+  image_url   String
+  sort_order  Int     @default(0)
+  is_primary  Boolean @default(false)
+
+  @@index([product_id])
+}
+
+model ProductVariant {
+  id                   String    @id @default(uuid())
+  product_id           String
+  product              Product   @relation(fields: [product_id], references: [id])
+  sku                  String    @unique
+  price                Decimal
+  mrp                  Decimal
+  stock                Int       @default(0)
+  low_stock_threshold  Int       @default(5)
+  status               String    @default("ACTIVE")
+  barcode              String?
+  image_url            String?
+  deleted_at           DateTime?
+
+  attributes         VariantAttribute[]
+  inventoryMovements InventoryMovement[]
+  cartItems          CartItem[]
+  orderItems         OrderItem[]
+
+  @@index([product_id])
+  @@index([sku])
+}
+
+model VariantAttribute {
+  id              String         @id @default(uuid())
+  variant_id      String
+  variant         ProductVariant @relation(fields: [variant_id], references: [id])
+  attribute_name  String
+  attribute_value String
+
+  @@index([variant_id])
+}
+
+model InventoryMovement {
+  id           String         @id @default(uuid())
+  variant_id   String
+  variant      ProductVariant @relation(fields: [variant_id], references: [id])
+  type         InventoryMovementType
+  quantity     Int
+  reference_id String?
+  notes        String?
+  created_at   DateTime       @default(now())
+
+  @@index([variant_id])
+}
+
+model Cart {
+  id         String   @id @default(uuid())
+  user_id    String?
+  user       User?    @relation(fields: [user_id], references: [id])
+  session_id String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  items CartItem[]
+
+  @@index([user_id])
+}
+
+model CartItem {
+  id         String         @id @default(uuid())
+  cart_id    String
+  cart       Cart           @relation(fields: [cart_id], references: [id])
+  variant_id String
+  variant    ProductVariant @relation(fields: [variant_id], references: [id])
+  quantity   Int            @default(1)
+
+  @@index([cart_id])
+  @@index([variant_id])
+}
+
+model Wishlist {
+  id      String @id @default(uuid())
+  user_id String
+  user    User   @relation(fields: [user_id], references: [id])
+
+  items WishlistItem[]
+
+  @@index([user_id])
+}
+
+model WishlistItem {
+  id          String   @id @default(uuid())
+  wishlist_id String
+  wishlist    Wishlist @relation(fields: [wishlist_id], references: [id])
+  product_id  String
+  product     Product  @relation(fields: [product_id], references: [id])
+
+  @@index([wishlist_id])
+  @@index([product_id])
+}
+
+model Coupon {
+  id              String   @id @default(uuid())
+  code            String   @unique
+  type            String   // PERCENTAGE or FIXED
+  value           Decimal
+  min_order_value Decimal?
+  max_discount    Decimal?
+  expiry_date     DateTime?
+  usage_limit     Int?
+  per_user_limit  Int?
+  is_active       Boolean  @default(true)
+
+  usages CouponUsage[]
+}
+
+model CouponUsage {
+  id        String   @id @default(uuid())
+  coupon_id String
+  coupon    Coupon   @relation(fields: [coupon_id], references: [id])
+  user_id   String
+  user      User     @relation(fields: [user_id], references: [id])
+  order_id  String
+  used_at   DateTime @default(now())
+
+  @@index([coupon_id])
+  @@index([user_id])
+  @@index([order_id])
+}
+
+model Order {
+  id                  String   @id @default(uuid())
+  user_id             String
+  user                User     @relation(fields: [user_id], references: [id])
+  order_number        String   @unique
+  total_amount        Decimal
+  discount_amount     Decimal  @default(0)
+  shipping_amount     Decimal  @default(0)
+  final_amount        Decimal
+  status              String   @default("PLACED")
+  shipping_address_id String
+  billing_address_id  String
+  coupon_id           String?
+  created_at          DateTime @default(now())
+  
+  shippingAddress Address @relation("ShippingAddress", fields: [shipping_address_id], references: [id])
+  billingAddress  Address @relation("BillingAddress", fields: [billing_address_id], references: [id])
+
+  items   OrderItem[]
+  history OrderStatusHistory[]
+  payment Payment?
+  shipment Shipment?
+
+  @@index([user_id])
+}
+
+model OrderItem {
+  id                     String         @id @default(uuid())
+  order_id               String
+  order                  Order          @relation(fields: [order_id], references: [id])
+  variant_id             String?        // Made optional so if variant is hard-deleted, order item still exists, though we use soft-deletes
+  variant                ProductVariant? @relation(fields: [variant_id], references: [id])
+  product_name_snapshot  String
+  variant_sku_snapshot   String
+  quantity               Int
+  price_at_time          Decimal
+  total_price            Decimal
+
+  @@index([order_id])
+  @@index([variant_id])
+}
+
+model OrderStatusHistory {
+  id         String   @id @default(uuid())
+  order_id   String
+  order      Order    @relation(fields: [order_id], references: [id])
+  status     String
+  notes      String?
+  changed_by String?
+  created_at DateTime @default(now())
+
+  @@index([order_id])
+}
+
+model Payment {
+  id               String   @id @default(uuid())
+  order_id         String   @unique
+  order            Order    @relation(fields: [order_id], references: [id])
+  payment_method   String
+  transaction_id   String?
+  amount           Decimal
+  status           String   @default("PENDING") // PENDING, PAID, FAILED, REFUNDED
+  gateway_response Json?
+  created_at       DateTime @default(now())
+
+  @@index([order_id])
+}
+
+model Shipment {
+  id              String    @id @default(uuid())
+  order_id        String    @unique
+  order           Order     @relation(fields: [order_id], references: [id])
+  courier_name    String?
+  tracking_number String?
+  tracking_url    String?
+  status          String    @default("PENDING") // PENDING, READY, SHIPPED, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, FAILED, RETURNED
+  shipped_at      DateTime?
+  delivered_at    DateTime?
+
+  @@index([order_id])
+}
+
+model NotificationLog {
+  id                  String   @id @default(uuid())
+  order_id            String?
+  event_type          String
+  channel             String   // WHATSAPP, EMAIL, SMS
+  provider            String?
+  status              String   @default("PENDING")
+  provider_message_id String?
+  error               String?
+  created_at          DateTime @default(now())
+  sent_at             DateTime?
+
+  @@index([order_id, event_type, channel]) // Ensures we can check idempotency easily
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  user_id    String
+  user       User     @relation(fields: [user_id], references: [id])
+  type       String
+  channel    String
+  content    String
+  is_read    Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  @@index([user_id])
+}
+
+model Banner {
+  id         String  @id @default(uuid())
+  title      String
+  image_url  String
+  link_url   String?
+  position   String
+  is_active  Boolean @default(true)
+  sort_order Int     @default(0)
+}
+
+model AdminActivityLog {
+  id          String   @id @default(uuid())
+  user_id     String
+  user        User     @relation(fields: [user_id], references: [id])
+  action      String
+  resource    String
+  resource_id String
+  details     Json?
+  created_at  DateTime @default(now())
+
+  @@index([user_id])
+}
+
+model SiteSetting {
+  key         String @id
+  value       String
+  description String?
+}
