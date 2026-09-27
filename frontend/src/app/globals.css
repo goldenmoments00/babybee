@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ivory: #FFF9F3;
+  --color-beige-100: #F7EFE5;
+  --color-beige-300: #E2D5C4;
+  --color-beige-500: #BCA68F;
+  --color-peach-100: #FFEAE1;
+  --color-peach-300: #FFCDBE;
+  --color-peach-500: #FF9B7D;
+  --color-gold-300: #FFD275;
+  --color-gold-500: #FFB347;
+  --color-gold-700: #D98C22;
+  --color-brown-900: #3C2A21;
+
+  --color-background: var(--color-ivory);
+  --color-foreground: var(--color-brown-900);
+  
+  --color-primary: var(--color-gold-500);
+  --color-primary-hover: var(--color-gold-700);
+  
+  --color-secondary: var(--color-peach-500);
+  --color-secondary-hover: var(--color-peach-300);
+
+  --font-sans: 'Inter', sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Custom Scrollbar for Drawer/Filters */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-beige-300);
+  border-radius: 4px;
+}
