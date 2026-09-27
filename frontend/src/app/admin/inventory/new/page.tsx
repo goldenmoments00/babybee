@@ -53,7 +53,7 @@ export default function AddProduct() {
     };
 
     try {
-      const res = await fetch("http://localhost:5000/api/v1/products", {
+      const res = await fetch("http://localhost:5000/api/v1/admin/products", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

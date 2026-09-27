@@ -41,7 +41,7 @@ export default function AddCategory() {
     }
 
     try {
-      const endpoint = isSubcategory ? "http://localhost:5000/api/v1/categories/subcategories" : "http://localhost:5000/api/v1/categories";
+      const endpoint = isSubcategory ? "http://localhost:5000/api/v1/admin/subcategories" : "http://localhost:5000/api/v1/admin/categories";
       const res = await fetch(endpoint, {
         method: "POST",
         headers: {

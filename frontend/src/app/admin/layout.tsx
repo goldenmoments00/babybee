@@ -41,7 +41,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
         <div className="p-4 border-t border-beige-300">
-          <button className="flex items-center gap-3 px-4 py-3 w-full text-brown-900/70 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors">
+          <button 
+            onClick={() => {
+              localStorage.removeItem("admin_token");
+              window.location.href = "/admin/login";
+            }}
+            className="flex items-center gap-3 px-4 py-3 w-full text-brown-900/70 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors"
+          >
             <LogOut className="w-5 h-5" />
             <span className="font-medium">Logout</span>
           </button>
