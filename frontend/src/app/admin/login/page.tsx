@@ -7,7 +7,7 @@ export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
-  const { showToast } = useToast();
+  const { addToast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,13 +21,13 @@ export default function AdminLogin() {
       
       if (res.ok && data.token) {
         localStorage.setItem("admin_token", data.token);
-        showToast("success", "Logged in successfully!");
+        addToast("Logged in successfully!", "success");
         router.push("/admin");
       } else {
-        showToast("error", data.error?.message || "Login failed");
+        addToast(data.error?.message || "Login failed", "error");
       }
     } catch (err) {
-      showToast("error", "Network error. Is the backend running?");
+      addToast("Network error. Is the backend running?", "error");
     }
   };
 

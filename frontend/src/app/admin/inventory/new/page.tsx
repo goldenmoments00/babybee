@@ -11,27 +11,27 @@ export default function AddProduct() {
   const [stock, setStock] = useState("");
   
   const router = useRouter();
-  const { showToast } = useToast();
+  const { addToast } = useToast();
 
   useEffect(() => {
     // Quick fetch for categories to get a valid subcategory_id
     fetch("http://localhost:5000/api/v1/categories")
       .then(res => res.json())
       .then(data => setCategories(data))
-      .catch(() => showToast("error", "Failed to load categories"));
+      .catch(() => addToast("Failed to load categories", "error"));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = localStorage.getItem("admin_token");
     if (!token) {
-      showToast("error", "You must be logged in!");
+      addToast("You must be logged in!", "error");
       router.push("/admin/login");
       return;
     }
 
     if (!subcategoryId) {
-      showToast("error", "Please select a subcategory");
+      addToast("Please select a subcategory", "error");
       return;
     }
 
@@ -63,14 +63,14 @@ export default function AddProduct() {
       });
       
       if (res.ok) {
-        showToast("success", "Product added successfully!");
+        addToast("Product added successfully!", "success");
         router.push("/admin/inventory");
       } else {
         const errorData = await res.json();
-        showToast("error", errorData.error?.message || "Failed to add product");
+        addToast(errorData.error?.message || "Failed to add product", "error");
       }
     } catch (err) {
-      showToast("error", "Network error");
+      addToast("Network error", "error");
     }
   };
 

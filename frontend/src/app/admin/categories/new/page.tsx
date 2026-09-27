@@ -10,7 +10,7 @@ export default function AddCategory() {
   const [categories, setCategories] = useState<any[]>([]);
   
   const router = useRouter();
-  const { showToast } = useToast();
+  const { addToast } = useToast();
 
   useEffect(() => {
     fetch("http://localhost:5000/api/v1/categories")
@@ -22,7 +22,7 @@ export default function AddCategory() {
     e.preventDefault();
     const token = localStorage.getItem("admin_token");
     if (!token) {
-      showToast("error", "You must be logged in!");
+      addToast("You must be logged in!", "error");
       router.push("/admin/login");
       return;
     }
@@ -34,7 +34,7 @@ export default function AddCategory() {
     
     if (isSubcategory) {
       if (!parentId) {
-        showToast("error", "Select a parent category first");
+        addToast("Select a parent category first", "error");
         return;
       }
       payload.category_id = parentId;
@@ -52,14 +52,14 @@ export default function AddCategory() {
       });
       
       if (res.ok) {
-        showToast("success", `${isSubcategory ? "Subcategory" : "Category"} created successfully!`);
+        addToast(`${isSubcategory ? "Subcategory" : "Category"} created successfully!`, "success");
         router.push("/admin/categories");
       } else {
         const errorData = await res.json();
-        showToast("error", errorData.error?.message || "Failed to add category");
+        addToast(errorData.error?.message || "Failed to add category", "error");
       }
     } catch (err) {
-      showToast("error", "Network error");
+      addToast("Network error", "error");
     }
   };
 
