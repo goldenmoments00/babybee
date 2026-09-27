@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Package, Search, Edit } from "lucide-react";
+import Link from "next/link";
 
 export default function AdminInventory() {
   const [search, setSearch] = useState("");
@@ -16,9 +17,9 @@ export default function AdminInventory() {
     <div className="max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold text-brown-900">Inventory Management</h1>
-        <button className="bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-xl font-medium transition-colors">
+        <Link href="/admin/inventory/new" className="bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-xl font-medium transition-colors">
           Add Stock
-        </button>
+        </Link>
       </div>
 
       <div className="bg-white rounded-2xl border border-beige-300 shadow-sm overflow-hidden">
